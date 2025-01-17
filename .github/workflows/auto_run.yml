@@ -1,0 +1,38 @@
+name: 天翼云自动签到
+
+on:
+  schedule:
+    - cron: '0 1,6,12 * * *'  # UTC时间1:00, 6:00, 12:00 (对应北京时间9:00, 14:00, 20:00)
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  sign-in:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v3
+      
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+        
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: 运行签到脚本
+      env:
+        TYY_USERNAME: ${{ secrets.TYY_USERNAME }}
+        TYY_PASSWORD: ${{ secrets.TYY_PASSWORD }}
+        PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+      run: |
+        python tyyqiandao.py
+      
+    - name: 检查运行状态
+      if: failure()
+      run: |
+        echo "::error::签到脚本运行失败，请检查日志" 
